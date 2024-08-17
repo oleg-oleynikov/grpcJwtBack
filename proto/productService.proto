@@ -1,0 +1,43 @@
+// syntax = "proto3";
+
+// package grpcJwt;
+
+// import "google/protobuf/empty.proto";
+// import "proto/auth_service.proto";
+
+// message Product {
+//     string ProductId = 1;
+//     string ProductTitle = 2;
+// }
+
+// message CreateProduct {
+//     grpcJwt.AccessToken access_token = 1;
+//     repeated Product Products = 2;
+// }
+
+// message CreateProductReq {
+//     Product Product = 1;
+// }
+
+// message CreateProductRes {
+//     auth.AccessToken access_token = 1;
+// }
+
+// message GetProductsAccountReq {
+//     // string AccountId = 1;
+//     auth.AccessToken access_token = 1;
+// }
+
+// message GetProductsAccountRes {
+//     repeated Product products = 1;
+// }
+
+// message GetAllProductsRes {
+//     repeated Product products = 1;
+// }
+
+// service ProductService {
+//     rpc CreateProduct(CreateProductReq) returns (CreateProductRes);
+//     rpc GetAllProducts(google.protobuf.Empty) returns (GetAllProductsRes);
+//     rpc GetProductsAccount(GetProductsAccountReq) returns (GetProductsAccountRes);
+// }

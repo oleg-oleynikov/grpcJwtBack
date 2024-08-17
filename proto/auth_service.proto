@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package grpcJwt;
+option go_package = ".;pb";
+
+message Account {
+    string id = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message SignInRequest {
+    message Account {
+        string Email = 1;
+        string Password = 2;
+    }
+
+    Account account = 1;
+}
+
+message PairTokens {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
+message SignInResponse {
+    PairTokens pairTokens = 1;
+}
+
+message SignUpRequest {
+    message Account {
+        string email = 2;
+        string password = 3;
+        uint32 age = 4;
+    }
+
+    Account account = 1;
+}
+
+message SignUpResponse {
+    PairTokens pairTokens = 1;
+}
+
+message RefreshRequest {
+    string refreshToken = 2;
+}
+
+message RefreshResponse {
+    PairTokens pairTokens = 1;
+}
+
+message SignOutRequest {
+    string accountId = 1;
+    string refreshToken = 2;
+}
+
+message SignOutResponse {
+    bool success = 1;
+}
+
+service AuthService {
+    rpc SignIn(SignInRequest) returns (SignInResponse);
+    rpc SignUp(SignUpRequest) returns (SignUpResponse);
+    rpc SignOut(SignOutRequest) returns (SignOutResponse);
+    rpc Refresh(RefreshRequest) returns (RefreshResponse);
+}
