@@ -61,6 +61,7 @@ func (manager *JWTManager) Verify(accessToken string) (*AccountClaims, error) {
 			return []byte(manager.secretKey), nil
 		},
 	)
+
 	if err != nil {
 		return nil, fmt.Errorf("invalid token: %v", err)
 	}
@@ -68,6 +69,10 @@ func (manager *JWTManager) Verify(accessToken string) (*AccountClaims, error) {
 	claims, ok := token.Claims.(*AccountClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid token claims: %v", err)
+	}
+
+	if !claims.VerifyExpiresAt(time.Now().Unix(), true) {
+		return nil, fmt.Errorf("token has expiried")
 	}
 
 	return claims, nil

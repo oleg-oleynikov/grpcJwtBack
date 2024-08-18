@@ -12,10 +12,10 @@ type Account struct {
 	Email          string
 	HashedPassword string
 	Role           string
-	Age            int
+	Age            uint32
 }
 
-func NewAccount(email string, password string, role string, age int) (*Account, error) {
+func NewAccount(email string, password string, role string, age uint32) (*Account, error) {
 	uuid, _ := uuid.NewV7()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

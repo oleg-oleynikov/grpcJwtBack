@@ -25,7 +25,7 @@ func (store *InMemoryAccountStore) Find(email string) (*service.Account, error) 
 
 	account, ok := store.accounts[email]
 	if !ok {
-		return nil, fmt.Errorf("store doesnt contains account with email: %s", email)
+		return nil, fmt.Errorf("store doesnt contains account with email %s", email)
 	}
 
 	return account, nil
@@ -37,7 +37,7 @@ func (store *InMemoryAccountStore) Save(account *service.Account) error {
 
 	_, ok := store.accounts[account.Email]
 	if ok {
-		return fmt.Errorf("store also contains account with email: %s", account.Email)
+		return fmt.Errorf("store already exist account with email %s", account.Email)
 	}
 
 	store.accounts[account.Email] = account.Clone()

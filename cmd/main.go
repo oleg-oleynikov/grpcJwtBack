@@ -34,11 +34,13 @@ func main() {
 		panic(fmt.Sprintf("Failed to get duration access token: %v", err))
 	}
 
-	jwtManager := service.NewJWTManager(os.Getenv("SECRET_KEY"), accessTokenExpDur) // jwtManager
+	jwtManager := service.NewJWTManager(os.Getenv("SECRET_KEY"), accessTokenExpDur)
 	accountStore := db.NewInMemoryAccountStore()
 	sessionStore := db.NewInMemorySessionStore()
 
-	seedUsers(accountStore)
+	// if err := seedAccounts(accountStore); err != nil {
+	// 	panic("cannot seedUsers")
+	// }
 
 	refreshTokenExpDur, err := time.ParseDuration(os.Getenv("REFRESH_TOKEN_EXP"))
 	if err != nil {
@@ -72,14 +74,14 @@ func main() {
 	logrus.Info("Server stopped, exiting")
 }
 
-func seedUsers(userStore service.AccountStore) error {
-	user1, err := service.NewAccount("user@gmail.com", "pwd", "user", 15)
-	if err != nil {
-		return err
-	}
+// func seedAccounts(accountStore service.AccountStore) error {
+// 	user1, err := service.NewAccount("user@gmail.com", "pwd", "user", 15)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return userStore.Save(user1)
-}
+// 	return accountStore.Save(user1)
+// }
 
 func unary() grpc.UnaryServerInterceptor {
 	return func(
@@ -88,7 +90,7 @@ func unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		logrus.Println("--> unary interceptor: ", info.FullMethod)
+		// logrus.Println("--> unary interceptor: ", info.FullMethod)
 
 		// Получение имя метода
 		// strings := strings.Split(info.FullMethod, "/")

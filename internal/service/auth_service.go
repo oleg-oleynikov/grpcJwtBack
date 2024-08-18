@@ -5,7 +5,6 @@ import (
 	"grpcJwt/pb"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,14 +19,6 @@ type AuthService struct {
 }
 
 func NewAuthService(accountStore AccountStore, jwtManager *JWTManager, sessionStore SessionStore, refreshTokenExp time.Duration) *AuthService {
-	// exp, err := time.ParseDuration(os.Getenv("REFRESH_TOKEN_EXP"))
-	// if err != nil {
-	// 	logrus.Debugf("failed to parse token exp: %v", err)
-	// }
-
-	// logrus.Println(time.Duration(exp.Seconds()))
-	logrus.Debugf(refreshTokenExp.String())
-
 	return &AuthService{
 		accountStore:    accountStore,
 		jwtManager:      jwtManager,
@@ -37,12 +28,16 @@ func NewAuthService(accountStore AccountStore, jwtManager *JWTManager, sessionSt
 }
 
 func (auth *AuthService) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb.SignInResponse, error) {
-	account, err := auth.accountStore.Find(req.GetAccount().Email)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot find account: %v", err)
+	if req.Account.Email == "" || req.Account.Password == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "parametrs email/password is empty")
 	}
 
-	if account == nil || !account.IsCorrectPassword(req.Account.GetPassword()) {
+	account, err := auth.accountStore.Find(req.Account.Email)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cannot find account with email %s", req.Account.Email)
+	}
+
+	if account == nil || !account.IsCorrectPassword(req.Account.Password) {
 		return nil, status.Errorf(codes.NotFound, "incorrect username/password")
 	}
 
@@ -53,12 +48,12 @@ func (auth *AuthService) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb
 
 	refreshToken, err := auth.jwtManager.GenerateRefreshToken()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "cannot generate refresh token")
 	}
 
 	session := NewSession(refreshToken, account.Id, auth.refreshTokenExp)
 	if err := auth.sessionStore.Save(session); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "cannot create a session")
 	}
 
 	res := &pb.SignInResponse{
@@ -72,10 +67,46 @@ func (auth *AuthService) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb
 }
 
 func (auth *AuthService) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "Not implemented")
+	if req.Account.Email == "" || req.Account.Password == "" || req.Account.Age == 0 {
+		return nil, status.Errorf(codes.FailedPrecondition, "some parametrs is empty")
+	}
+
+	newAccount, err := NewAccount(req.Account.Email, req.Account.Password, "user", req.Account.Age)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create account: %v", err)
+	}
+
+	if err := auth.accountStore.Save(newAccount); err != nil {
+		return nil, status.Errorf(codes.AlreadyExists, "Account with email %s already exist", newAccount.Email)
+	}
+
+	accessToken, err := auth.jwtManager.GenerateAccessToken(newAccount)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot generate access token")
+	}
+
+	refreshToken, err := auth.jwtManager.GenerateRefreshToken()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot generate refresh token")
+	}
+
+	session := NewSession(refreshToken, newAccount.Id, auth.refreshTokenExp)
+	if err := auth.sessionStore.Save(session); err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create a session")
+	}
+
+	res := &pb.SignUpResponse{
+		PairTokens: &pb.PairTokens{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		},
+	}
+
+	return res, nil
 }
 
 func (auth *AuthService) SignOut(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
+
 	return nil, status.Errorf(codes.Unimplemented, "Not implemented method")
 }
 
