@@ -29,7 +29,7 @@ func main() {
 
 	initializers.SetupLogger()
 
-	accessTokenExpDur, err := time.ParseDuration(os.Getenv("TOKEN_EXP"))
+	accessTokenExpDur, err := time.ParseDuration(os.Getenv("EXPIRES_AT"))
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get duration access token: %v", err))
 	}
@@ -38,11 +38,7 @@ func main() {
 	accountStore := db.NewInMemoryAccountStore()
 	sessionStore := db.NewInMemorySessionStore()
 
-	// if err := seedAccounts(accountStore); err != nil {
-	// 	panic("cannot seedUsers")
-	// }
-
-	refreshTokenExpDur, err := time.ParseDuration(os.Getenv("REFRESH_TOKEN_EXP"))
+	refreshTokenExpDur, err := time.ParseDuration(os.Getenv("EXPIRES_RT"))
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get duration refresh token: %v", err))
 	}

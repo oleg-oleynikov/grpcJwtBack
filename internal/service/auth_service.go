@@ -28,8 +28,8 @@ func NewAuthService(accountStore AccountStore, jwtManager *JWTManager, sessionSt
 }
 
 func (auth *AuthService) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb.SignInResponse, error) {
-	if req.Account.Email == "" || req.Account.Password == "" {
-		return nil, status.Errorf(codes.FailedPrecondition, "parametrs email/password is empty")
+	if req.Account == nil || req.Account.Email == "" || req.Account.Password == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "some parametrs is empty")
 	}
 
 	account, err := auth.accountStore.Find(req.Account.Email)
@@ -67,7 +67,7 @@ func (auth *AuthService) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb
 }
 
 func (auth *AuthService) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
-	if req.Account.Email == "" || req.Account.Password == "" || req.Account.Age == 0 {
+	if req.Account == nil || req.Account.Email == "" || req.Account.Password == "" || req.Account.Age == 0 {
 		return nil, status.Errorf(codes.FailedPrecondition, "some parametrs is empty")
 	}
 
@@ -106,8 +106,38 @@ func (auth *AuthService) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb
 }
 
 func (auth *AuthService) SignOut(ctx context.Context, req *pb.SignOutRequest) (*pb.SignOutResponse, error) {
+	if req.AccessToken == "" || req.RefreshToken == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "some parametrs is empty")
+	}
+	claims, err := auth.jwtManager.Verify(req.AccessToken)
+	if err != nil {
+		return &pb.SignOutResponse{
+			Success: false,
+		}, status.Errorf(codes.DeadlineExceeded, "%v", err)
+	}
 
-	return nil, status.Errorf(codes.Unimplemented, "Not implemented method")
+	s, err := auth.sessionStore.FindById(claims.Id)
+	if err != nil {
+		return &pb.SignOutResponse{
+			Success: false,
+		}, status.Errorf(codes.Internal, "failed to signout")
+	}
+
+	if s.RefreshToken != req.RefreshToken || time.Now().Unix() > s.ExpiresRt {
+		return &pb.SignOutResponse{
+			Success: false,
+		}, status.Errorf(codes.Internal, "refresh token is not valid")
+	}
+
+	if err := auth.sessionStore.Remove(claims.Id); err != nil {
+		return &pb.SignOutResponse{
+			Success: false,
+		}, status.Errorf(codes.Unauthenticated, "")
+	}
+
+	return &pb.SignOutResponse{
+		Success: true,
+	}, nil
 }
 
 func (auth *AuthService) Refresh(ctx context.Context, req *pb.RefreshRequest) (*pb.RefreshResponse, error) {

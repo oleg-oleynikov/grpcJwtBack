@@ -50,7 +50,7 @@ message RefreshResponse {
 }
 
 message SignOutRequest {
-    string accountId = 1;
+    string accessToken = 1;
     string refreshToken = 2;
 }
 
@@ -59,8 +59,8 @@ message SignOutResponse {
 }
 
 service AuthService {
-    rpc SignIn(SignInRequest) returns (SignInResponse);
-    rpc SignUp(SignUpRequest) returns (SignUpResponse);
-    rpc SignOut(SignOutRequest) returns (SignOutResponse);
-    rpc Refresh(RefreshRequest) returns (RefreshResponse);
+    rpc SignIn(SignInRequest) returns (SignInResponse) {};
+    rpc SignUp(SignUpRequest) returns (SignUpResponse) {};
+    rpc SignOut(SignOutRequest) returns (SignOutResponse) {};
+    rpc Refresh(RefreshRequest) returns (RefreshResponse) {};
 }

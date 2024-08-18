@@ -31,8 +31,13 @@ func (store *InMemorySessionStore) Save(session *service.Session) error {
 func (store *InMemorySessionStore) FindById(accountId string) (*service.Session, error) {
 	session, ok := store.sessions[accountId]
 	if !ok {
-		return nil, fmt.Errorf("session with id %s doesnt exist", accountId)
+		return nil, fmt.Errorf("session doesnt exist")
 	}
 
 	return session, nil
+}
+
+func (store *InMemorySessionStore) Remove(accountId string) error {
+	delete(store.sessions, accountId)
+	return nil
 }
